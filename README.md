@@ -1,5 +1,5 @@
 # EISAM 2025
-EISAM: Leveraging Extragradient for Effective Sharpness-Aware Minimization in Deep Learning
+### EISAM: Leveraging Extragradient for Effective Sharpness-Aware Minimization in Deep Learning
 
 The following figure illustrates the optimization trajectories of EISAM, SAM, and SGD over 100 steps on a 3D toy loss landscape.
 
