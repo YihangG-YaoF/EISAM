@@ -4,7 +4,7 @@ EISAM: Leveraging Extragradient for Effective Sharpness-Aware Minimization in De
 The following figure illustrates the optimization trajectories of EISAM, SAM, and SGD over 100 steps on a 3D toy loss landscape.
 
 <p align="center">
-  <img src="figures/3d-100step.gif" width="720" alt="Optimization trajectories of EISAM, SAM, and SGD on a 3D toy loss landscape">
+  <img src="supplemental_material_for_EISAM/figures/3d-100step.gif" width="720" alt="Optimization trajectories of EISAM, SAM, and SGD on a 3D toy loss landscape">
 </p>
 
 **Figure 1.** Optimization paths of different optimizers (EISAM vs. SAM vs. SGD) on a synthetic 3D loss surface after 100 steps.
