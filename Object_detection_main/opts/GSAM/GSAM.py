@@ -9,7 +9,7 @@ class GSAM(torch.optim.Optimizer):
         super(GSAM, self).__init__(params, defaults)
 
         self.model = model
-        self.base_optimizer_class = base_optimizer  # 保存类
+        self.base_optimizer_class = base_optimizer 
         self.adaptive = adaptive
         self.rho_scheduler = rho_scheduler
         self.perturb_eps = perturb_eps
@@ -18,7 +18,6 @@ class GSAM(torch.optim.Optimizer):
         # self.base_optimizer = base_optimizer(self.param_groups, **kwargs)
         self.base_optimizer = base_optimizer
 
-        # 可选：同步 defaults（如果需要）
         self.defaults.update(self.base_optimizer.defaults)
 
         # initialize self.rho_t
@@ -29,7 +28,7 @@ class GSAM(torch.optim.Optimizer):
             if hasattr(ReduceOp, 'AVG'):
                 self.grad_reduce = ReduceOp.AVG
                 self.manual_average = False
-            else: # PyTorch <= 1.11.0 does not have AVG, need to manually average across processes
+            else: 
                 self.grad_reduce = ReduceOp.SUM
                 self.manual_average = True
         elif grad_reduce.lower() == 'sum':
@@ -55,7 +54,7 @@ class GSAM(torch.optim.Optimizer):
                 e_w = p.grad * scale.to(p)
                 if self.adaptive:
                     e_w *= torch.pow(p, 2)
-                p.add_(e_w)  # climb to the local maximum "w + e(w)"
+                p.add_(e_w) 
                 self.state[p]['e_w'] = e_w
                 
     @torch.no_grad()
@@ -92,7 +91,7 @@ class GSAM(torch.optim.Optimizer):
 
     @torch.no_grad()
     def _sync_grad(self):
-        if torch.distributed.is_initialized(): # synchronize final gardients
+        if torch.distributed.is_initialized(): 
             for group in self.param_groups:
                 for p in group['params']:
                     if p.grad is None: continue
@@ -158,18 +157,13 @@ class GSAM(torch.optim.Optimizer):
 
     @torch.no_grad()
     def first_step(self, zero_grad=False):
-        """第一次前向 + 反向，计算原始梯度，然后扰动权重"""
-        # 假设已经在外面做了 forward + backward
         self.perturb_weights(rho=self.rho_t)
         if zero_grad:
-            self.base_optimizer.zero_grad()  # 可选，根据需要
+            self.base_optimizer.zero_grad() 
 
     @torch.no_grad()
     def second_step(self, zero_grad=False):
-        """第二次前向 + 反向，得到扰动位置的梯度，然后分解梯度，恢复权重，更新"""
         disable_running_stats(self.model)
-        
-        # 这里假设外面又做了一次 forward + backward
         
         self.gradient_decompose(self.alpha)
         self.unperturb()
@@ -192,31 +186,22 @@ class GSAM(torch.optim.Optimizer):
             get_grad = self.forward_backward_func
 
         with self.maybe_no_sync():
-            # get gradient
             outputs, loss_value = get_grad()
 
-            # perturb weights
             self.perturb_weights(rho=self.rho_t)
 
-            # disable running stats for second pass
             disable_running_stats(self.model)
 
-            # get gradient at perturbed weights
             get_grad()
 
-            # decompose and get new update direction
             self.gradient_decompose(self.alpha)
 
-            # unperturb
             self.unperturb()
             
-        # synchronize gradients across workers
         self._sync_grad()    
 
-        # update with new directions
         self.base_optimizer.step()
 
-        # enable running stats
         enable_running_stats(self.model)
 
         return outputs, loss_value
